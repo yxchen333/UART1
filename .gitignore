@@ -1,0 +1,9 @@
+work/
+transcript
+*.wlf
+*.bak
+*.log
+*.jou
+*.pb
+modelsim.ini
+

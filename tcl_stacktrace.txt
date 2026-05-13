@@ -1,0 +1,12 @@
+Tue May 12 19:42:05 CST 2026
+Trace back: unknown scheme 'G' in 'G:/ability/Verilog/baud_generator/uart_tx.v'
+    while executing
+"error "unknown scheme '$scheme' in '$url'""
+    (procedure "::uri::split" line 29)
+    invoked from within
+"::uri::split $name "file""
+    (procedure "Project::handleDroppedFile" line 9)
+    invoked from within
+"Project::handleDroppedFile  [::dnd::ConvertToBinary G:/ability/Verilog/baud_generator/uart_tx.v] 141 175"
+  <2:F:/download/changyongruanjian/Modelsim2020.4/win64/tk8.6/bgerror.tcl:106: ::tkerror {unknown scheme 'G' in 'G:/ability/Verilog/baud_generator/uart_tx.v'}
+  <1:eval:1: ::tk::dialog::error::bgerror {unknown scheme 'G' in 'G:/ability/Verilog/baud_generator/uart_tx.v'}
