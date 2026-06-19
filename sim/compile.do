@@ -1,6 +1,12 @@
+if {[file exists work]} {
+	vdel -all
+}
+
 vlib work
+vmap work work
 
-vlog ../RTL/baud_generator.v
-vlog ../RTL/uart_tx.v
+vlog ../RTL/*.v
+vlog ../tb/*.sv
 
-vlog ../tb/tb_bg.sv
+vopt work.tb_bg -o tb_bg_opt +acc
+

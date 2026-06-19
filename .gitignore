@@ -6,4 +6,20 @@ transcript
 *.jou
 *.pb
 modelsim.ini
+# ModelSim
+work/
+*.wlf
+transcript
+modelsim.ini
 
+# Temp
+*.log
+*.bak
+*.tmp
+
+# VSCode
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini

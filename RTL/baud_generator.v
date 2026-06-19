@@ -4,6 +4,7 @@ module baud_generator(
     output reg [7:0]count,
     output reg bg_tick,
     output reg bg_clk
+    
 );
     
     
@@ -19,7 +20,7 @@ module baud_generator(
             if(count==N-1)begin
                 bg_tick<=1'b1;
                 count<=8'b0;
-                bg_clk=~bg_clk;
+                bg_clk<=~bg_clk;
             end
             else begin
                 count<=count+8'b1;

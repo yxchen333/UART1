@@ -1,7 +1,10 @@
-add wave sim:/tb_bg/*
+quietly WaveActivateNextPane {} 0
 
-add wave sim:/tb_bg/u1/*
-add wave sim:/tb_bg/u2/*
+
+
+
+add wave *
+
 
 configure wave -timelineunits ns
 configure wave -namecolwidth 200
