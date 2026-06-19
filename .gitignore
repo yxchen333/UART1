@@ -1,25 +1,47 @@
+# ==========================
+# ModelSim / QuestaSim
+# ==========================
 work/
 transcript
 *.wlf
-*.bak
-*.log
-*.jou
-*.pb
 modelsim.ini
-# ModelSim
-work/
-*.wlf
-transcript
-modelsim.ini
+*.mti
+*.mpf
 
-# Temp
+# ==========================
+# Quartus
+# ==========================
+db/
+incremental_db/
+output_files/
+greybox_tmp/
+*.qws
+*.smsg
+
+# ==========================
+# Temporary files
+# ==========================
 *.log
 *.bak
 *.tmp
+*.jou
+*.pb
+*.vcd
+*.fst
 
+# ==========================
 # VSCode
+# ==========================
 .vscode/
 
+# ==========================
 # Windows
+# ==========================
 Thumbs.db
 Desktop.ini
+
+# ==========================
+# Python
+# ==========================
+__pycache__/
+*.pyc
