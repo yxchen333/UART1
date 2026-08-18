@@ -28,7 +28,7 @@ module uart_tx(
         case(state)
             idle:next_state=(tx_valid)?start:idle;
             start:next_state=DATA;
-            DATA:next_state=(bit_cnt==3'd7&bg_tick)?stop:DATA;
+            DATA:next_state=(bit_cnt==3'd7&&bg_tick)?stop:DATA;
             stop:next_state=idle;
             default:next_state=idle;
         
