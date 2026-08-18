@@ -17,3 +17,6 @@ modelsim.ini
 # OS/editor temporary files
 .DS_Store
 Thumbs.db
+
+# ModelSim transcript
+transcript
