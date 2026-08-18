@@ -8,4 +8,4 @@ vsim tb_bg_opt
 
 do wave.do
 
-run 5000ns
+run -all
