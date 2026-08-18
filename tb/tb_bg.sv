@@ -5,12 +5,12 @@ module tb_bg;
     reg [7:0]data;
     reg tx_valid;
 
-    wire [7:0]count;
+  
     wire bg_tick;
-    wire bg_clk;
+  
     wire tx;
-    wire [2:0]bit_cnt;
-    wire [1:0]state;
+   
+
     wire busy;
     wire tx_done;
    
@@ -28,34 +28,37 @@ module tb_bg;
     wire frame_error;
 
 
-    baud_generator u1(
+   baud_generator #(
+        .BAUD_DIV(10)
+    ) u1 (
         .clk(clk),
         .reset_n(reset_n),
-        .count(count),
-        .bg_tick(bg_tick),
-        .bg_clk(bg_clk)
-        );
-    uart_tx u2(
+        .bg_tick(bg_tick)
+    );
+
+    uart_tx #(
+        .BAUD_DIV(10)
+    ) u2 (
         .clk(clk),
         .reset_n(reset_n),
         .bg_tick(bg_tick),
         .data(data),
         .tx_valid(tx_valid),
         .tx(tx),
-        .bit_cnt(bit_cnt),
-        .state(state),
         .busy(busy),
         .tx_done(tx_done)
-        );
-    
-    uart_rx u3(
+    );
+
+    uart_rx #(
+        .BAUD_DIV(10)
+    ) u3 (
         .clk(clk),
         .reset_n(reset_n),
         .rx(rx),
         .rx_data(rx_data),
         .rx_done(rx_done),
         .frame_error(frame_error)
-        );
+    );
 
     //clock
     initial begin

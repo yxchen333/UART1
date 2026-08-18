@@ -1,20 +1,23 @@
-module uart_tx(
+module uart_tx#(
+    parameter BAUD_DIV = 10
+)(
     input clk,
     input reset_n,
     input bg_tick,
     input [7:0]data,
     input tx_valid,
 
+
     output reg tx,
-    output reg [2:0]bit_cnt,
-    output reg [1:0]state,
     output busy,
+    
     output  reg tx_done
     
 
 );
 
-   
+    reg [2:0]bit_cnt;
+    reg [1:0]state;
     reg [7:0]shifter;
     
     
@@ -46,6 +49,7 @@ module uart_tx(
             
         end 
         else begin
+            tx_done <= 1'b0;
             
             if(bg_tick)begin
                 state<=next_state;

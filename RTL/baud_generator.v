@@ -1,14 +1,15 @@
-module baud_generator(
+module baud_generator#(
+    parameter BAUD_DIV = 10
+)(
     input clk,
     input reset_n,
-    output reg [7:0]count,
-    output reg bg_tick,
-    output reg bg_clk
+    output reg bg_tick
     
 );
+    reg bg_clk;
     
-    
-    parameter N=8'd10;
+    reg [7:0]count;
+  
    
     always @(posedge clk or negedge reset_n)begin
         if(!reset_n)begin
@@ -17,7 +18,7 @@ module baud_generator(
             bg_clk<=1'b0;
         end
         else begin  
-            if(count==N-1)begin
+            if(count==BAUD_DIV -1)begin
                 bg_tick<=1'b1;
                 count<=8'b0;
                 bg_clk<=~bg_clk;

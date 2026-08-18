@@ -1,4 +1,6 @@
-module uart_rx(
+module uart_rx #(
+    parameter BAUD_DIV = 10
+)(
     input clk,
     input reset_n,
     input rx,
@@ -12,7 +14,7 @@ module uart_rx(
     reg [7:0]sample_cnt;//sample clk 0-BAUD_DIV-1
     reg [7:0]shifter;
     parameter idle=2'd0,start=2'd1,DATA=2'd2,stop=2'd3;
-    parameter BAUD_DIV=10;
+    
     
 
     always @(posedge clk or negedge reset_n)begin
@@ -28,7 +30,8 @@ module uart_rx(
            
             end
         else begin
-           rx_done <= 0;
+           rx_done <=1'b0;
+           frame_error<=1'b0;
             case(state)
                 idle: begin
                     rx_done<=0;
@@ -74,11 +77,11 @@ module uart_rx(
                             if(rx==1)begin
                             rx_done<=1;
                             rx_data<=shifter;
-                            frame_error<=0;
+                            
                             end
                             else 
                             frame_error<=1;
-
+                            
                             state<=idle;
                             sample_cnt<=8'b0;
                         end
