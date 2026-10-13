@@ -1,35 +1,32 @@
 class uart_monitor_transaction extends uart_transaction;
-    bit [7:0] actual_data;
 
-    bit actual_stop_bit;
+    bit [7:0] actual_data;
     bit actual_rx_done;
     bit actual_frame_error;
-    
     time sample_time;
 
     function new();
         super.new();
         actual_data=8'h00;
-        actual_stop_bit=1'b1;
         actual_rx_done=1'b0;
-        sample_time=0;
         actual_frame_error=1'b0;
+        sample_time=0;
+        
 
     endfunction
 
     function void set_sample(
         bit[7:0] sampled_data,
-        bit      sampled_stop_bit,
         bit      sampled_rx_done,
         bit      sampled_frame_error
     );
         actual_data=sampled_data;
-        actual_stop_bit=sampled_stop_bit;
         actual_rx_done=sampled_rx_done;
-        sample_time=$time;
         actual_frame_error=sampled_frame_error;
+        sample_time=$time;
+       
 
-        stop_error=(sampled_stop_bit!=1'b1);
+       
 
     endfunction
 
@@ -38,7 +35,6 @@ class uart_monitor_transaction extends uart_transaction;
     );
         copy_base(dst);
         dst.actual_data=this.actual_data;
-        dst.actual_stop_bit=this.actual_stop_bit;
         dst.actual_rx_done=this.actual_rx_done;
         dst.actual_frame_error=this.actual_frame_error;
         dst.sample_time=this.sample_time;
@@ -56,19 +52,15 @@ class uart_monitor_transaction extends uart_transaction;
         string name="UART_MONITOR_TRANSACTION"
     );
         $display(
-            "[%s] actual_data=0x%02h stop_bit=%0b stop_error=%0b",
+            "[%s] sample_time=%0t actual_data=0x%02h  rx_done=%0b frame_error=%0b",
             name,
+            sample_time,
             actual_data,
-            actual_stop_bit,
-            stop_error
+            actual_rx_done,
+            actual_frame_error
+          
         );
 
-        $display(
-            "    rx_done=%0b sample_time=%0t frame_error=%0b",
-            actual_rx_done,
-            sample_time,
-            actual_frame_error
-        );
     endfunction
 
 endclass

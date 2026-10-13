@@ -1,6 +1,8 @@
 module uart_assertions(
-    input logic clk,
+    input logic tx_clk,
+    input logic rx_clk,
     input logic reset_n,
+
 
     input logic tx,
     input logic busy,
@@ -11,7 +13,7 @@ module uart_assertions(
 );
 
     property p_tx_idle_high;
-        @(posedge clk)
+        @(posedge tx_clk)
         disable iff(!reset_n)
 
         (!busy)|->(tx===1'b1);
@@ -24,7 +26,7 @@ module uart_assertions(
     end
 
     property p_tx_done_one_cycle;
-        @(posedge clk)
+        @(posedge tx_clk)
         disable iff(!reset_n)
 
         tx_done|=>!tx_done;
@@ -37,7 +39,7 @@ module uart_assertions(
     end
 
     property p_rx_done_error_mutex;
-        @(posedge clk)
+        @(posedge rx_clk)
         disable iff(!reset_n)
 
         !(rx_done&&frame_error);
@@ -50,7 +52,7 @@ module uart_assertions(
     end
 
     property p_busy_no_early_drop;
-        @(posedge clk)
+        @(posedge tx_clk)
         disable iff(!reset_n)
 
         (busy&&!tx_done)|=>(busy||tx_done);
@@ -64,7 +66,7 @@ module uart_assertions(
     end
 
     property p_tx_done_after_busy;
-        @(posedge clk)
+        @(posedge tx_clk)
         disable iff(!reset_n)
 
         tx_done|->$past(busy);
@@ -77,7 +79,7 @@ module uart_assertions(
     end
 
     property p_rx_outputs_clear_during_reset;
-        @(posedge clk)
+        @(posedge rx_clk)
         !reset_n|->(!rx_done&&!frame_error);
     endproperty
 
@@ -86,7 +88,7 @@ module uart_assertions(
         $error("[ASSERT FAIL] RX result active during reset");
 
     property p_rx_clean_after_reset;
-        @(posedge clk)
+        @(posedge rx_clk)
 
         $rose(reset_n)|=>(!rx_done&&!frame_error);
     endproperty
@@ -98,7 +100,7 @@ module uart_assertions(
         );
 
     property p_tx_safe_during_reset;
-        @(posedge clk)
+        @(posedge tx_clk)
 
         !reset_n
         |->
@@ -116,7 +118,7 @@ module uart_assertions(
         );
 
     property p_tx_clean_after_reset;
-        @(posedge clk)
+        @(posedge tx_clk)
 
         $rose(reset_n)
         |=>

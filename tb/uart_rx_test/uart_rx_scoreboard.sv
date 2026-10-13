@@ -18,11 +18,15 @@ class uart_rx_scoreboard;
     endfunction
 
     task run();
-        uart_transaction expected;
+        uart_transaction base_tr;
+        uart_stop_error_transaction expected;
         uart_monitor_transaction actual;
 
         forever begin
-            drv2scb.get(expected);
+
+            drv2scb.get(base_tr);
+            if(!$cast(expected,base_tr)) $fatal(1,"[uart_rx_scoreboard] expected uart_false_start_transaction");
+            
             mon2scb.get(actual);
             
             $display("[RX_SCB] waiting expected...");

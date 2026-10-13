@@ -14,17 +14,6 @@ class uart_rx_monitor;
 
     endfunction
 
-    task count_rx_done();
-         begin
-           
-
-            rx_done_count++;
-
-            $display("[RX_MONITOR] rx_done_count=%0d time=%0t",rx_done_count,$time);
-        end
-    endtask
-
-
     task run();
         
         uart_monitor_transaction tr;
@@ -47,14 +36,14 @@ class uart_rx_monitor;
                     vif.rx_data
                 );
                 mon2scb.put(tr);
-                count_rx_done();
+                rx_done_count++;
             end
             else if(vif.frame_error) begin
                 tr=new();
 
                 tr.actual_data=vif.rx_data;
-                tr.actual_rx_done=1'b0;
-                tr.actual_frame_error=1'b1;
+                tr.actual_rx_done=vif.rx_done;
+                tr.actual_frame_error=vif.frame_error;
 
                 $display(
                 "[RX_MONITOR] time=%0t FRAME_ERROR",

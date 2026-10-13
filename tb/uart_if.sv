@@ -1,4 +1,4 @@
-interface uart_if(input logic clk);
+interface uart_if(input logic tx_clk,input logic rx_clk);
     logic reset_n;
 
     logic [7:0] data;
@@ -20,6 +20,9 @@ interface uart_if(input logic clk);
 
     logic       rx_driver;
     logic       loopback_en;
+
+    logic       rx_override_en;
+    logic       rx_override;
 
     
 

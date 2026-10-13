@@ -1,4 +1,4 @@
-class uart_false_start_transaction extends uart_transaction;
+class uart_false_start_transaction extends uart_stop_error_transaction;
 
     rand bit inject_false_start;
     rand int unsigned false_start_cycles;
@@ -31,7 +31,7 @@ class uart_false_start_transaction extends uart_transaction;
     protected function void copy_false_start(
         uart_false_start_transaction dst
     );
-        copy_base(dst);
+        copy_stop(dst);
         dst.false_start_cycles=this.false_start_cycles;
         dst.inject_false_start=this.inject_false_start;
 
@@ -41,7 +41,6 @@ class uart_false_start_transaction extends uart_transaction;
         uart_false_start_transaction tr;
         tr=new();
         copy_false_start(tr);
-
         return tr;
     endfunction
 

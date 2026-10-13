@@ -37,7 +37,7 @@ class uart_tx_test;
         wait(env.gen2drv.num()==0&&env.drv2scb.num()==0&&env.mon2scb.num()==0
                 &&env.txdrv2cov.num()==0);
         
-        repeat(2)@(posedge env.vif.clk);
+        repeat(2)@(posedge env.vif.tx_clk);
 
 
 

@@ -54,7 +54,7 @@ class uart_tx_monitor;
 
                     // Start bit中心
                     repeat(baud_div / 2)
-                        @(posedge vif.clk);
+                        @(posedge vif.tx_clk);
 
                     if (vif.tx !== 1'b0) begin
                         $error(
@@ -65,7 +65,7 @@ class uart_tx_monitor;
 
                     // 从Start中心移动到data[0]中心
                     repeat(baud_div)
-                        @(posedge vif.clk);
+                        @(posedge vif.tx_clk);
 
                     // LSB-first采样8个数据位
                     for (i = 0; i < 8; i = i + 1) begin
@@ -74,14 +74,14 @@ class uart_tx_monitor;
 
                         if (i < 7) begin
                             repeat(baud_div)
-                                @(posedge vif.clk);
+                                @(posedge vif.tx_clk);
                         end
 
                     end
 
                     // 移动到Stop bit中心
                     repeat(baud_div)
-                        @(posedge vif.clk);
+                        @(posedge vif.tx_clk);
 
                     if (vif.tx !== 1'b1) begin
                         $error(
@@ -129,10 +129,10 @@ class uart_tx_monitor;
 
             join_any
 
-            /*
-            * 正常解析和复位监测中，谁先结束就退出；
-            * 随后停止另一个并行进程。
-            */
+                /*
+                * 正常解析和复位监测中，谁先结束就退出；
+                * 随后停止另一个并行进程。
+                */
             disable FRAME_MONITOR;
 
 
@@ -149,7 +149,7 @@ class uart_tx_monitor;
                 wait(vif.tx   === 1'b1);
 
                 // 给Monitor一个重新启动的边界
-                @(posedge vif.clk);
+                @(posedge vif.tx_clk);
 
             end
 
@@ -157,12 +157,12 @@ class uart_tx_monitor;
 
             
 
-            $display(
-                "[TX_MONITOR] frame_count=%0d data=0x%02h time=%0t",
-                frame_count,
-                tr.actual_data,
-                $time
-            );
+        $display(
+            "[TX_MONITOR] frame_count=%0d data=0x%02h time=%0t",
+            frame_count,
+            tr.actual_data,
+            $time
+        );
 
         end
 

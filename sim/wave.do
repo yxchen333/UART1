@@ -7,7 +7,8 @@ delete wave *
 #==================================================
 
 add wave -divider {CLOCK AND RESET}
-add wave sim:/tb_uart_top/clk
+add wave sim:/tb_uart_top/tx_clk
+add wave sim:/tb_uart_top/rx_clk
 add wave sim:/tb_uart_top/vif/reset_n
 
 add wave -divider {RX INPUT CONTROL}

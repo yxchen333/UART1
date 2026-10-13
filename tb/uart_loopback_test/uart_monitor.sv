@@ -13,10 +13,12 @@ class uart_monitor;
         uart_monitor_transaction tr;
 
         forever begin
-            @(posedge vif.rx_done);
+            @(posedge vif.rx_done or posedge vif.frame_error );
 
             tr=new();
             tr.data=vif.rx_data;
+            tr.actual_rx_done=vif.rx_done;
+            tr.actual_frame_error=vif.frame_error;
 
             tr.display("MONITOR:");
             mon2scb.put(tr);

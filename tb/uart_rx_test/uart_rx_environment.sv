@@ -24,16 +24,20 @@ class uart_rx_environment;
         scb=new(drv2scb,mon2scb);
     endfunction
 
-    task run();
+   task run(input int transaction_num = 20);
+
+        gen.transaction_num=transaction_num;
         fork
-           // gen.run();
-            //drv.run();
-           // drv.run_reset_data_test();
 
             gen.run_false_start_test();
-            drv.run_with_false_start();
+
+            drv.run_with_false_start(transaction_num);
+
             mon.run();
+
             scb.run();
+
         join_none
+
     endtask
 endclass

@@ -6,6 +6,9 @@ class uart_reset_transaction extends uart_transaction;
    rand int unsigned reset_data_bit;
    rand int unsigned reset_phase_offset;
    rand int unsigned reset_low_cycles;
+
+   localparam int baud_div =
+    uart_params_pkg::RX_BAUD_DIV;
    
 
    
@@ -47,7 +50,7 @@ class uart_reset_transaction extends uart_transaction;
     }
 
     constraint c_reset_phase{
-        reset_phase_offset inside {[1:UART_BAUD_DIV/2]};
+        reset_phase_offset inside {[1:baud_div/2]};
     }
 
     constraint c_reset_width{

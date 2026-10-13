@@ -104,27 +104,4 @@ class uart_tx_environment;
 
     endtask
 
-
-
-    task run();
-
-        int group_num;
-
-        /*
-        * 此时expected_result_num已在Generator构造函数中初始化为10。
-        */
-        group_num = gen.expected_result_num;
-        fork
-            //gen.run();
-           // drv.run();
-            //drv.run_reset_data_test();
-
-            gen.run_busy(group_num);
-            drv.run_busy(group_num);
-            mon.run();
-            scb.run();
-            cov.run();
-
-        join_none
-    endtask
 endclass

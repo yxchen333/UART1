@@ -5,9 +5,10 @@ class uart_tx_driver;
     mailbox #(uart_transaction) txdrv2scb;
     mailbox #(uart_transaction) txdrv2cov;
 
-    localparam int baud_div=uart_params_pkg::UART_BAUD_DIV;
+    localparam int baud_div=uart_params_pkg::TX_BAUD_DIV;
+
     int inter_frame_gap;
-    inject_point_t reset_point;
+    
 
     int normal_frame_count;
     int expected_send_count;
@@ -33,7 +34,7 @@ class uart_tx_driver;
         this.txdrv2cov=txdrv2cov;
         
         inter_frame_gap=2;
-        reset_point = INJECT_NONE;
+       
 
         normal_frame_count         = 0;
         expected_send_count        = 0;
@@ -50,11 +51,12 @@ class uart_tx_driver;
         wait(vif.reset_n===1'b1);
         wait(vif.busy==1'b0);
 
-        @(negedge vif.clk)
+        @(negedge vif.tx_clk)
         vif.data=tr.data;
         vif.tx_valid=1'b1;
 
         wait(vif.busy==1'b1);
+        @(negedge vif.tx_clk);
         vif.tx_valid=1'b0;
 
         $display("[TX_DRIVER] time=%0t data=0x%02h",$time,tr.data);
@@ -64,7 +66,7 @@ class uart_tx_driver;
 
         wait(vif.tx_done==1'b1);
 
-        repeat(inter_frame_gap)@(posedge vif.clk);
+        repeat(inter_frame_gap)@(posedge vif.tx_clk);
 
     endtask
 
@@ -77,7 +79,7 @@ class uart_tx_driver;
         wait(vif.busy === 1'b0);
 
         // 在下降沿驱动输入
-        @(negedge vif.clk);
+        @(negedge vif.tx_clk);
 
         vif.data     = tr.data;
         vif.tx_valid = 1'b1;
@@ -89,7 +91,7 @@ class uart_tx_driver;
         * 等到下降沿再撤销tx_valid，
         * 避免和DUT在posedge采样产生竞争。
         */
-        @(negedge vif.clk);
+        @(negedge vif.tx_clk);
         vif.tx_valid = 1'b0;
 
         $display(
@@ -103,16 +105,16 @@ class uart_tx_driver;
 
     task pulse_reset();
 
-        @(negedge vif.clk);
-         vif.tx_valid = 1'b0;
-         vif.reset_n  = 1'b0;
+        @(negedge vif.tx_clk);
+        vif.tx_valid = 1'b0;
+        vif.reset_n  = 1'b0;
 
-          $display(
-            "[TX_RESET] assert reset time=%0t",
-            $time
+        $display(
+        "[TX_RESET] assert reset time=%0t",
+        $time
         );
 
-        repeat (2) @(negedge vif.clk);
+        repeat (2) @(negedge vif.tx_clk);
 
         vif.reset_n = 1'b1;
         $display(
@@ -120,7 +122,7 @@ class uart_tx_driver;
             $time
         );
 
-        repeat (2) @(posedge vif.clk);
+        repeat (2) @(posedge vif.tx_clk);
 
     endtask
 
@@ -135,7 +137,7 @@ class uart_tx_driver;
             $time
         );
 
-        repeat (2) @(negedge vif.clk);
+        repeat (2) @(negedge vif.tx_clk);
 
         vif.reset_n = 1'b1;
 
@@ -144,7 +146,26 @@ class uart_tx_driver;
             $time
         );
 
-        repeat (2) @(posedge vif.clk);
+        repeat (2) @(posedge vif.tx_clk);
+
+    endtask
+
+    task check_reset_idle();
+
+        assert (
+            vif.busy    === 1'b0 &&
+            vif.tx      === 1'b1 &&
+            vif.tx_done === 1'b0
+        )
+        else begin
+            $error(
+                "[TX_RESET_CHECK] reset recovery failed: time=%0t busy=%b tx=%b tx_done=%b",
+                $time,
+                vif.busy,
+                vif.tx,
+                vif.tx_done
+            );
+        end
 
     endtask
 
@@ -166,7 +187,7 @@ class uart_tx_driver;
 
                 // 在Start bit中间复位
                 repeat (baud_div / 2)
-                    @(posedge vif.clk);
+                    @(posedge vif.tx_clk);
 
                 $display(
                     "[TX_RESET] reset during START time=%0t",
@@ -174,6 +195,7 @@ class uart_tx_driver;
                 );
 
                 pulse_reset();
+                check_reset_idle();
 
             end
 
@@ -191,7 +213,7 @@ class uart_tx_driver;
                     baud_div +
                     reset_tr.reset_data_bit* baud_div +
                     reset_tr.reset_phase_offset
-                ) @(posedge vif.clk);
+                ) @(posedge vif.tx_clk);
 
                 $display(
                     "[TX_RESET] reset during DATA time=%0t",
@@ -199,6 +221,7 @@ class uart_tx_driver;
                 );
 
                 pulse_reset();
+                check_reset_idle();
 
             end
 
@@ -208,9 +231,9 @@ class uart_tx_driver;
                  wait(vif.tx_state_dbg == TX_STOP);
 
                 repeat (baud_div / 4)
-                    @(posedge vif.clk);
+                    @(posedge vif.tx_clk);
 
-                @(negedge vif.clk);
+                @(negedge vif.tx_clk);
 
                 $display(
                     "[TX_RESET] selected STOP reset time=%0t",
@@ -218,6 +241,7 @@ class uart_tx_driver;
                 );
 
                 pulse_reset_now();
+                check_reset_idle();
 
             end
 
@@ -247,6 +271,8 @@ class uart_tx_driver;
 
     endtask
 
+    
+
     task drive_one_with_busy(uart_busy_transaction busy_tr);
 
         uart_transaction expected_tr;
@@ -254,7 +280,7 @@ class uart_tx_driver;
 
         expected_tr=new();
         expected_tr.data=busy_tr.data;
-        expected_tr.stop_error=busy_tr.stop_error;
+        
 
         txdrv2scb.put(expected_tr.copy());
         expected_send_count++;
@@ -269,8 +295,8 @@ class uart_tx_driver;
 
                 // 在Start bit中间
                 repeat (baud_div / 2)
-                    @(posedge vif.clk);
-                @(negedge vif.clk);
+                    @(posedge vif.tx_clk);
+                @(negedge vif.tx_clk);
 
                 vif.data=busy_tr.interference_data;
                 vif.tx_valid=1'b1;
@@ -280,7 +306,7 @@ class uart_tx_driver;
                 $display("[TX_BUSY] inject during START time=%0t  normal_data=0x%02h interference_data=0x%02h ",
                 $time,busy_tr.data,busy_tr.interference_data);
 
-                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.clk);
+                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.tx_clk);
                 
                 vif.tx_valid=1'b0;                
 
@@ -289,7 +315,7 @@ class uart_tx_driver;
             INJECT_DATA:begin
                 wait(vif.tx_state_dbg==TX_DATA);
 
-                repeat(busy_tr.busy_data_bit*baud_div+baud_div/2)@(posedge vif.clk);
+                repeat(busy_tr.busy_data_bit*baud_div+baud_div/2)@(posedge vif.tx_clk);
 
                 vif.data=busy_tr.interference_data;
                 vif.tx_valid=1'b1;
@@ -299,7 +325,7 @@ class uart_tx_driver;
                 $display("[TX_BUSY] inject during DATA time=%0t  normal_data=0x%02h interference_data=0x%02h ",
                 $time,busy_tr.data,busy_tr.interference_data);
 
-                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.clk);
+                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.tx_clk);
                 
                 vif.tx_valid=1'b0; 
             end
@@ -307,8 +333,8 @@ class uart_tx_driver;
             INJECT_STOP:begin
                 wait(vif.tx_state_dbg==TX_STOP);
 
-                repeat (baud_div / 2)  @(posedge vif.clk);
-                @(negedge vif.clk);
+                repeat (baud_div / 2)  @(posedge vif.tx_clk);
+                @(negedge vif.tx_clk);
 
                 vif.data=busy_tr.interference_data;
                 vif.tx_valid=1'b1;
@@ -318,7 +344,7 @@ class uart_tx_driver;
                 $display("[TX_BUSY] inject during STOP time=%0t  normal_data=0x%02h interference_data=0x%02h ",
                 $time,busy_tr.data,busy_tr.interference_data);
 
-                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.clk);
+                repeat (busy_tr.tx_valid_hold_cycles) @(posedge vif.tx_clk);
                 
                 vif.tx_valid=1'b0;  
             end
@@ -367,6 +393,7 @@ class uart_tx_driver;
         
         uart_transaction       base_tr;
         uart_reset_transaction reset_tr;
+        uart_reset_transaction recovery_tr;
 
         int i;
 
@@ -397,8 +424,24 @@ class uart_tx_driver;
             drive_one_with_reset(reset_tr);
             txdrv2cov.put(reset_tr.copy());
 
+
+            //FIFO,get data in line
             gen2txdrv.get(base_tr);
-            drive_one(base_tr);
+            if (!$cast(recovery_tr, base_tr)) begin
+                $fatal(
+                    1,
+                    "[TX_DRIVER] expected recovery reset transaction"
+                );
+            end
+
+            if (recovery_tr.inject_reset != 1'b0) begin
+                $fatal(
+                    1,
+                    "[TX_DRIVER] recovery transaction has inject_reset=%0b",
+                    recovery_tr.inject_reset
+                );
+            end
+            drive_one(recovery_tr);
         end
 
     endtask

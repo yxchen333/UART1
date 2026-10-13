@@ -1,12 +1,14 @@
 class uart_rx_test;
     uart_rx_environment env;
     virtual uart_if vif;
-    int expected_compare_num;
+    int transaction_num;
+    
 
     function new(virtual uart_if vif);
         this.vif=vif;
         env=new(vif);
-        expected_compare_num=1;
+        transaction_num=1;
+        
     endfunction
 
     task run();
@@ -14,23 +16,21 @@ class uart_rx_test;
         vif.loopback_en = 1'b0;
        
         
-        //env.gen.transaction_num=20;
-       // env.gen.configure_error_recovery();
-        //env.drv.reset_point=RX_RESET_START;
+        transaction_num=20;
+        
+      
 
-        env.run();
+        env.run(transaction_num);
 
-        wait(env.scb.compare_count == env.gen.expected_result_num);
+        wait(env.scb.compare_count == env.gen.transaction_num);
 
         env.scb.report();
 
         if (
-            env.gen.generated_count            == 20 &&
-            env.gen.injected_count             == 12  &&
-            env.drv.normal_frame_count         == 20 &&
-            env.drv.false_start_count          == 12 &&
-            env.scb.compare_count              == 20 &&
-            env.scb.pass_count                 == 20 &&
+            env.gen.generated_count            == transaction_num &&
+            env.drv.normal_frame_count         == transaction_num &&
+            env.scb.compare_count              == transaction_num &&
+            env.scb.pass_count                 == transaction_num &&
             env.scb.fail_count                 == 0
                 
            

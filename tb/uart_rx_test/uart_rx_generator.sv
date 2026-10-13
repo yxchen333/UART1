@@ -1,140 +1,83 @@
 class uart_rx_generator;
     mailbox #(uart_transaction) gen2rxdrv;
     int transaction_num;
-    bit error_pattern[$];
+    
+    bit error_pattern[$];  // 决定 stop_error
+    bit inject_plan[$];    // 决定 inject_false_start
 
-    uart_rx_gen_mode_t mode;
-
-    int expected_result_num;
     int generated_count;
     int injected_count;
 
     function new(mailbox #(uart_transaction) gen2rxdrv);
 
         this.gen2rxdrv=gen2rxdrv;
-        this.transaction_num=20;
-        mode            = RX_GEN_RANDOM;
+        this.transaction_num=20;     
 
-        expected_result_num=20;
         generated_count=0;
         injected_count=0;
 
     endfunction
 
-    function void configure_error_recovery();
-
-        mode = RX_GEN_ERROR_RECOVERY;
-
-        error_pattern.delete();
-
-        // 正常 → 正常
-        error_pattern.push_back(1'b0);
-        error_pattern.push_back(1'b0);
-
-        // 正常 → 错误 → 正常
-        error_pattern.push_back(1'b1);
-        error_pattern.push_back(1'b0);
-
-        // 错误 → 错误 → 正常
-        error_pattern.push_back(1'b1);
-        error_pattern.push_back(1'b1);
-        error_pattern.push_back(1'b0);
-
-        transaction_num = error_pattern.size();
-
-    endfunction
-
-    function void error_pattern1();
-        
-
-        error_pattern.push_back(1'b0); // normal
-        error_pattern.push_back(1'b0); // normal
-
-        error_pattern.push_back(1'b0); // normal
-        error_pattern.push_back(1'b1); // error
-
-        error_pattern.push_back(1'b1); // error
-        error_pattern.push_back(1'b0); // recovery normal
-
-        error_pattern.push_back(1'b1); // error
-        error_pattern.push_back(1'b1); // consecutive errors
-
-    endfunction
-
-    task run();
-
-        uart_transaction tr;
-
-        case(mode)
-            RX_GEN_ERROR_RECOVERY:begin
-
-                foreach(error_pattern[i])begin
-                    tr=new();
-
-                    if(!tr.randomize()) begin
-                        $fatal(1,"[RX_GENERATOR] randomization failed");
-                    end
-
-                    tr.stop_error=error_pattern[i];
-
-                    $display("[RX_GENERATOR] recovery[%0d] data=0x%02h stop_error=%0b",i,tr.data,tr.stop_error);
-
-                    gen2rxdrv.put(tr);
-                end
-            end
-
-            RX_GEN_RANDOM: begin
-
-                repeat (transaction_num) begin
-
-                    tr = new();
-
-                    if (!tr.randomize()) begin
-                        $fatal(
-                            1,
-                            "[RX_GENERATOR] randomization failed"
-                        );
-                    end
-
-                    gen2rxdrv.put(tr);
-
-                end
-
-            end
-
-
-            default: begin
-                $fatal(
-                    1,
-                    "[RX_GENERATOR] unsupported generator mode"
-                );
-            end
-
-        endcase
-
-
-    endtask
-
-    task run_false_start_test();
-        uart_false_start_transaction tr;
-
-        bit inject_plan[$];
+    function void configure_stop_and_start_error_pattern();
 
         int i;
+        int j;
+        bit tmp;
+        
+
+        error_pattern.delete();
+        inject_plan.delete();
 
         
-        int false_start_target=12;
+        error_pattern.push_back(1'b0);
+        inject_plan.push_back(1'b0);
 
-       
-        bit generation_done=1'b0;
+        error_pattern.push_back(1'b0);
+        inject_plan.push_back(1'b1);
 
-        repeat (false_start_target)
-            inject_plan.push_back(1'b1);
-        repeat (expected_result_num-false_start_target)inject_plan.push_back(1'b0);
+        error_pattern.push_back(1'b1);
+        inject_plan.push_back(1'b0);
 
-        inject_plan.shuffle();
+        error_pattern.push_back(1'b1);
+        inject_plan.push_back(1'b1);
+
+        repeat(transaction_num - 4) begin
+            error_pattern.push_back($urandom_range(0,1));
+            inject_plan.push_back($urandom_range(0,1));
+        end
+
+        //two queues are disorganized
         
-        for(i=0;i<expected_result_num;i++) begin
+
+        for(i = error_pattern.size()-1; i > 0; i--) begin
+
+            j = $urandom_range(0, i);
+
+            // error_pattern交换
+            tmp = error_pattern[i];
+            error_pattern[i] = error_pattern[j];
+            error_pattern[j] = tmp;
+
+            // inject_plan必须交换相同的两个位置
+            tmp = inject_plan[i];
+            inject_plan[i] = inject_plan[j];
+            inject_plan[j] = tmp;
+
+        end
+
+    endfunction
+
+    
+    
+
+    task run_false_start_test();
+
+        int i;
+        uart_false_start_transaction tr;
+
+        configure_stop_and_start_error_pattern();
+
+        for(i=0;i<transaction_num;i++) begin
             tr=new();
 
             if(!tr.randomize()with{inject_false_start==inject_plan[i];})
@@ -145,21 +88,23 @@ class uart_rx_generator;
             if(tr.inject_false_start)
                 injected_count++;
             
+            tr.stop_error = error_pattern[i];
             tr.display("RX_GENERATOR");
 
             gen2rxdrv.put(tr);
             generated_count++;
         end
 
-        generation_done=1'b1;
 
         $display(
-            "[RX_GENERATOR] complete total =%0d false_start=%0d normal_only=%0d",
+            "[RX_GENERATOR] complete total =%0d false_start=%0d ",
             generated_count,
-            injected_count,
-            generated_count-injected_count
+            injected_count
         );
 
 
     endtask
+
+   
+
 endclass

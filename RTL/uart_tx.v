@@ -1,6 +1,4 @@
-module uart_tx#(
-    parameter BAUD_DIV = 10
-)(
+module uart_tx(
     input clk,
     input reset_n,
     input bg_tick,
@@ -19,12 +17,25 @@ module uart_tx#(
     reg [2:0]bit_cnt;
     reg [1:0]state;
     reg [7:0]shifter;
-    
-    
-
 
     parameter idle=2'd0,start=2'd1,DATA=2'd2,stop=2'd3;
     reg [1:0] next_state;
+
+    reg rst_n_syn1;
+    reg rst_n_syn2;
+
+    always @(posedge clk or negedge reset_n)begin
+        if(!reset_n)begin
+            rst_n_syn1<=1'b0;
+            rst_n_syn2<=1'b0;
+        end
+        else begin
+            rst_n_syn1<=1'b1;
+            rst_n_syn2<=rst_n_syn1;
+        end
+    end
+
+
    
 
     always @(*)begin
@@ -39,8 +50,8 @@ module uart_tx#(
     end
 
     //low Voltage effective
-    always @(posedge clk or negedge reset_n)begin
-        if(!reset_n)begin
+    always @(posedge clk or negedge rst_n_syn2)begin
+        if(!rst_n_syn2)begin
             shifter<=8'b0;
             state<=idle;
             bit_cnt<=3'b0;
@@ -53,7 +64,7 @@ module uart_tx#(
             
             if(bg_tick)begin
                 state<=next_state;
-                tx_done <= 1'b0;
+                
                 case(state)
                     idle:begin
                         tx<=1'b1;
@@ -68,8 +79,8 @@ module uart_tx#(
                         bit_cnt <= bit_cnt + 1;
                     end
                     stop:begin
-                    tx<=1'b1;
-                    tx_done <= 1'b1;
+                        tx<=1'b1;
+                        tx_done <= 1'b1;
                     end
                 endcase                 
             end        

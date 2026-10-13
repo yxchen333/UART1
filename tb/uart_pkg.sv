@@ -41,13 +41,7 @@ package uart_pkg;
     RX_GEN_ERROR_RECOVERY
     } uart_rx_gen_mode_t;
 
-    typedef enum {
-        RX_RESET_NONE,
-        RX_RESET_START,
-        RX_RESET_DATA,
-        RX_RESET_STOP
-    } rx_reset_point_t;
-
+   
     
 
     //==================================================

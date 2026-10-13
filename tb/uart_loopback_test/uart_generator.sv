@@ -9,17 +9,23 @@ class uart_generator;
 
     task run();
 
-        uart_transaction tr;
+        uart_stop_error_transaction tr;
 
-        repeat(transaction_num) begin
+        for(int i=0;i<transaction_num;i++) begin
             tr=new();
 
             assert(tr.randomize())
             else $fatal("Transaction randomize failed");
 
+            tr.stop_error = (i == transaction_num-1);
+
             tr.display("Generator");
 
             gen2drv.put(tr);
         end
+
+        
+
+
     endtask
 endclass

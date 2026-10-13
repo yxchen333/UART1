@@ -22,17 +22,25 @@ class uart_scoreboard;
         forever begin
             drv2scb.get(expected);
             mon2scb.get(actual);
+            if(!actual.actual_frame_error)begin
 
-            if(expected.data===actual.data)begin
-                pass_count++;
+                if(expected.data===actual.data&&actual.actual_rx_done)begin
+                    pass_count++;
+                    $display("[PASS] expected=0x%02h actual=0x%02h",expected.data,actual.data);
 
-                $display("[PASS] expected=0x%02h actual=0x%02h",expected.data,actual.data);
-
+                end
             end
             else begin
-                fail_count++;
+                if(actual.actual_frame_error&&!actual.actual_rx_done)begin
+                    pass_count++;
+                    $display("[PASS] STOP ERROR DETECTED");
+                end
+                else begin
+                    fail_count++;
+                    $error("[FAIL] STOP ERROR CHECK FAILED");
+                end
 
-                $error("[FAIL] expected=0x%02h actual=0x%02h",expected.data,actual.data);
+                
             end
         end
     endtask
